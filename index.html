@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<meta name="format-detection" content="telephone=no">
+<title>Painel</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    background: #000;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+    min-height: 100vh; min-height: 100dvh; min-height: -webkit-fill-available;
+    display: flex; align-items: center; justify-content: center;
+    padding: calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
+    touch-action: manipulation;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+  .panel {
+    width: 100%; max-width: min(380px, 100%);
+    background: linear-gradient(160deg, #0a0000 0%, #1a0000 50%, #0a0000 100%);
+    border: 1px solid #ff1a1a33; border-radius: 18px;
+    padding: clamp(16px, 5vw, 22px) clamp(14px, 4.5vw, 20px);
+    box-shadow: 0 0 40px #ff000022, inset 0 0 60px #ff00000a, 0 10px 40px #000000cc;
+    position: relative; overflow: hidden;
+  }
+  .panel::before {
+    content: ''; position: absolute; top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle, #ff000015 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .panel-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 18px; padding-bottom: 14px;
+    border-bottom: 1px solid #ff1a1a22;
+    position: relative; z-index: 1;
+  }
+  .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #ff1a1a;
+    box-shadow: 0 0 12px #ff1a1a, 0 0 24px #ff1a1a88;
+    -webkit-animation: pulse 1.6s ease-in-out infinite;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @-webkit-keyframes pulse { 0%,100%{opacity:1;-webkit-transform:scale(1);} 50%{opacity:.5;-webkit-transform:scale(.85);} }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.85);} }
+  .panel-title {
+    color: #ff2a2a; font-size: clamp(13px, 4vw, 15px); font-weight: 700;
+    letter-spacing: 3px; text-transform: uppercase;
+    text-shadow: 0 0 10px #ff000066;
+  }
+  .plat-tag { margin-left: auto; font-family: monospace; font-size: 10px; color: #ff2a2a88; letter-spacing: 1px; text-transform: uppercase; }
+  .row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px; margin-bottom: 10px; min-height: 52px;
+    background: #ff000008; border: 1px solid #ff1a1a1a;
+    border-radius: 12px;
+    -webkit-transition: all .25s ease; transition: all .25s ease;
+    position: relative; z-index: 1;
+  }
+  .row:active { background: #ff000014; border-color: #ff1a1a44; }
+  .row-label {
+    color: #cc9999; font-size: clamp(13px, 3.6vw, 14px); font-weight: 500;
+    letter-spacing: .5px;
+    -webkit-transition: color .25s ease, text-shadow .25s ease;
+    transition: color .25s ease, text-shadow .25s ease;
+  }
+  .row.active .row-label { color: #ff4a4a; text-shadow: 0 0 10px #ff000066; }
+  .toggle { position: relative; width: 54px; height: 30px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .slider-toggle {
+    position: absolute; inset: 0;
+    background: #1a0505; border: 1px solid #ff1a1a33;
+    border-radius: 30px; cursor: pointer;
+    -webkit-transition: all .3s ease; transition: all .3s ease;
+  }
+  .slider-toggle::before {
+    content: ''; position: absolute; width: 22px; height: 22px;
+    left: 3px; top: 3px; background: #552222; border-radius: 50%;
+    -webkit-transition: all .3s cubic-bezier(.68,-.55,.27,1.55);
+    transition: all .3s cubic-bezier(.68,-.55,.27,1.55);
+  }
+  .toggle input:checked + .slider-toggle {
+    background: #ff000022; border-color: #ff1a1a;
+    box-shadow: 0 0 14px #ff000055, inset 0 0 10px #ff000033;
+  }
+  .toggle input:checked + .slider-toggle::before {
+    -webkit-transform: translateX(24px); transform: translateX(24px);
+    background: #ff2a2a; box-shadow: 0 0 10px #ff2a2a, 0 0 20px #ff1a1a88;
+  }
+  .fov-block {
+    background: #ff000008; border: 1px solid #ff1a1a1a;
+    border-radius: 12px; padding: 12px; margin-bottom: 10px;
+    position: relative; z-index: 1;
+  }
+  .fov-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .fov-head .row-label { font-size: clamp(12px, 3.4vw, 13px); }
+  .fov-val {
+    color: #ff2a2a; font-family: monospace;
+    font-size: clamp(13px, 3.6vw, 14px); font-weight: 700;
+    text-shadow: 0 0 8px #ff000088;
+  }
+  .fov-preview {
+    width: 100%; height: clamp(100px, 32vw, 130px);
+    display: flex; align-items: center; justify-content: center;
+    position: relative; margin-bottom: 10px;
+    background: #00000066; border-radius: 8px; overflow: hidden;
+  }
+  .fov-preview::before {
+    content: '✛'; position: absolute; color: #ff2a2a55; font-size: 22px;
+    text-shadow: 0 0 8px #ff000066;
+  }
+  .fov-circle {
+    border: 1px solid #ff2a2a; border-radius: 50%;
+    box-shadow: 0 0 12px #ff000066, inset 0 0 12px #ff000033;
+    width: 70px; height: 70px;
+    -webkit-transition: opacity .15s ease; transition: opacity .15s ease;
+  }
+  input[type=range] {
+    -webkit-appearance: none; -moz-appearance: none; appearance: none;
+    width: 100%; height: 8px;
+    background: #1a0505; border-radius: 8px;
+    outline: none; cursor: pointer;
+    border: 1px solid #ff1a1a22;
+    touch-action: pan-y;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #ff2a2a;
+    box-shadow: 0 0 10px #ff2a2a, 0 0 18px #ff1a1a88;
+    border: 1px solid #ff6a6a;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #ff2a2a; border: 1px solid #ff6a6a;
+    box-shadow: 0 0 10px #ff2a2a;
+  }
+  input[type=range]::-ms-thumb { width: 24px; height: 24px; border-radius: 50%; background: #ff2a2a; border: 1px solid #ff6a6a; }
+  input[type=range]::-ms-track { width: 100%; height: 8px; background: transparent; border-color: transparent; color: transparent; }
+  .btn-ff {
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; margin-top: 6px; padding: 16px; min-height: 54px;
+    background: linear-gradient(90deg, #ff000022, #ff000011, #ff000022);
+    border: 1px solid #ff1a1a55; border-radius: 12px;
+    color: #ff4a4a; font-size: clamp(13px, 4vw, 15px); font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase; text-decoration: none;
+    box-shadow: 0 0 20px #ff000033;
+    -webkit-transition: all .25s ease; transition: all .25s ease;
+    position: relative; z-index: 1;
+    -webkit-appearance: none; appearance: none;
+    font-family: inherit;
+  }
+  .btn-ff:active { background: #ff000033; box-shadow: 0 0 30px #ff000066; -webkit-transform: scale(.98); transform: scale(.98); }
+  .btn-float {
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; margin-top: 8px; padding: 14px; min-height: 50px;
+    background: #ff000011; border: 1px dashed #ff1a1a44;
+    border-radius: 12px; color: #ff6a6a;
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    position: relative; z-index: 1;
+    -webkit-appearance: none; appearance: none;
+    font-family: inherit;
+  }
+  .btn-float.on { background: #ff000022; border-style: solid; border-color: #ff2a2a; color: #ff2a2a; box-shadow: 0 0 20px #ff000066; }
+  .status {
+    margin-top: 14px; padding: 10px; text-align: center;
+    color: #661111; font-size: 11px; letter-spacing: 2px;
+    text-transform: uppercase; font-family: monospace, 'Courier New';
+    position: relative; z-index: 1;
+  }
+  .status span { color: #ff2a2a; text-shadow: 0 0 8px #ff000088; }
+</style>
+</head>
+<body>
+  <div class="panel">
+    <div class="panel-header">
+      <div class="dot"></div>
+      <div class="panel-title">Painel</div>
+      <div class="plat-tag" id="platTag">...</div>
+    </div>
+
+    <div class="row" data-fn="esp">
+      <span class="row-label">ESP</span>
+      <label class="toggle"><input type="checkbox" data-key="esp"><span class="slider-toggle"></span></label>
+    </div>
+
+    <div class="fov-block">
+      <div class="fov-head"><span class="row-label">Aimbot</span><span class="fov-val" id="aimVal">80%</span></div>
+      <input type="range" id="aimSlider" min="0" max="100" step="1" value="80">
+    </div>
+
+    <div class="fov-block">
+      <div class="fov-head"><span class="row-label">AimAssist</span><span class="fov-val" id="assistVal">60%</span></div>
+      <input type="range" id="assistSlider" min="0" max="100" step="1" value="60">
+    </div>
+
+    <div class="fov-block">
+      <div class="fov-head"><span class="row-label">AimLock</span><span class="fov-val" id="lockVal">90%</span></div>
+      <input type="range" id="lockSlider" min="0" max="100" step="1" value="90">
+    </div>
+
+    <div class="fov-block">
+      <div class="fov-head"><span class="row-label">NoRecoil</span><span class="fov-val" id="recoilVal">70%</span></div>
+      <input type="range" id="recoilSlider" min="0" max="100" step="1" value="70">
+    </div>
+
+    <div class="fov-block">
+      <div class="fov-head"><span class="row-label">FOV</span><span class="fov-val" id="fovVal">100</span></div>
+      <div class="fov-preview"><div class="fov-circle" id="fovCircle"></div></div>
+      <input type="range" id="fovSlider" min="0" max="200" step="1" value="100">
+    </div>
+
+    <div class="fov-block">
+      <div class="fov-head"><span class="row-label">Precision</span><span class="fov-val" id="precVal">50%</span></div>
+      <input type="range" id="precSlider" min="0" max="100" step="1" value="50">
+    </div>
+
+    <div class="fov-block">
+      <div class="fov-head"><span class="row-label">FPS</span><span class="fov-val" id="fpsVal">60</span></div>
+      <input type="range" id="fpsSlider" min="30" max="120" step="1" value="60">
+    </div>
+
+    <div class="row" data-fn="speed">
+      <span class="row-label">Speed</span>
+      <label class="toggle"><input type="checkbox" data-key="speed"><span class="slider-toggle"></span></label>
+    </div>
+    <div class="row" data-fn="fly">
+      <span class="row-label">Fly</span>
+      <label class="toggle"><input type="checkbox" data-key="fly"><span class="slider-toggle"></span></label>
+    </div>
+    <div class="row" data-fn="anti">
+      <span class="row-label">Anti-Ban</span>
+      <label class="toggle"><input type="checkbox" data-key="anti"><span class="slider-toggle"></span></label>
+    </div>
+
+    <button class="btn-float" id="btnFloat">◉ MODO OVERLAY (PERSISTENTE)</button>
+    <button class="btn-ff" id="btnLaunch">▶ ABRIR FREE FIRE</button>
+    <div class="status">STATUS: <span id="status">AGUARDANDO</span></div>
+  </div>
+
+<script>
+  (function() {
+    'use strict';
+
+    const STORAGE_KEY = 'painel_ff_config';
+    function safeGet(k) { try { return localStorage.getItem(k); } catch(e) { return null; } }
+    function safeSet(k, v) { try { localStorage.setItem(k, v); } catch(e) {} }
+    function saveConfig() { try { safeSet(STORAGE_KEY, JSON.stringify(window.CONFIG)); } catch(e) {} }
+    function loadConfig() { try { const r = safeGet(STORAGE_KEY); return r ? JSON.parse(r) : null; } catch(e) { return null; } }
+
+    const ua = (navigator.userAgent || navigator.vendor || '').toLowerCase();
+    const isAndroid = /android/.test(ua);
+    const isIOS = /ipad|iphone|ipod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    document.getElementById('platTag').textContent = isAndroid ? 'ANDROID' : isIOS ? 'iOS' : 'WEB';
+
+    const $ = id => document.getElementById(id);
+    const toggles = document.querySelectorAll('.toggle input');
+
+    toggles.forEach(t => {
+      t.addEventListener('change', () => {
+        t.closest('.row').classList.toggle('active', t.checked);
+        updateStatus();
+      });
+    });
+
+    const aimSlider = $('aimSlider'), aimVal = $('aimVal');
+    const assistSlider = $('assistSlider'), assistVal = $('assistVal');
+    const lockSlider = $('lockSlider'), lockVal = $('lockVal');
+    const recoilSlider = $('recoilSlider'), recoilVal = $('recoilVal');
+    const fovSlider = $('fovSlider'), fovVal = $('fovVal'), fovCircle = $('fovCircle');
+    const precSlider = $('precSlider'), precVal = $('precVal');
+    const fpsSlider = $('fpsSlider'), fpsVal = $('fpsVal');
+
+    aimSlider.addEventListener('input', () => { aimVal.textContent = aimSlider.value + '%'; updateConfig(); });
+    assistSlider.addEventListener('input', () => { assistVal.textContent = assistSlider.value + '%'; updateConfig(); });
+    lockSlider.addEventListener('input', () => { lockVal.textContent = lockSlider.value + '%'; updateConfig(); });
+    recoilSlider.addEventListener('input', () => { recoilVal.textContent = recoilSlider.value + '%'; updateConfig(); });
+    precSlider.addEventListener('input', () => { precVal.textContent = precSlider.value + '%'; updateConfig(); });
+    fpsSlider.addEventListener('input', () => { fpsVal.textContent = fpsSlider.value; updateConfig(); });
+
+    function updateFov() {
+      const v = +fovSlider.value;
+      fovVal.textContent = v;
+      const box = fovCircle.parentElement.clientHeight || 120;
+      const maxPx = Math.round(box * 0.92);
+      const px = Math.round((v / 200) * maxPx);
+      fovCircle.style.width = px + 'px';
+      fovCircle.style.height = px + 'px';
+      fovCircle.style.opacity = v === 0 ? 0 : 1;
+    }
+    fovSlider.addEventListener('input', () => { updateFov(); updateConfig(); });
+    window.addEventListener('resize', updateFov);
+    window.addEventListener('orientationchange', () => setTimeout(updateFov, 150));
+
+    // ===== DEFAULTS FIXOS pedidos por Token =====
+    window.CONFIG = {
+      aim: 80,
+      aimassist: 60,
+      aimlock: 90,
+      norecoil: 70,
+      fov: 100,
+      precision: 50,
+      fps: 60,
+      toggles: {},
+      overlay: false
+    };
+
+    const saved = loadConfig();
+    if (saved) {
+      if (saved.aim != null) aimSlider.value = saved.aim;
+      if (saved.aimassist != null) assistSlider.value = saved.aimassist;
+      if (saved.aimlock != null) lockSlider.value = saved.aimlock;
+      if (saved.norecoil != null) recoilSlider.value = saved.norecoil;
+      if (saved.fov != null) fovSlider.value = saved.fov;
+      if (saved.precision != null) precSlider.value = saved.precision;
+      if (saved.fps != null) fpsSlider.value = saved.fps;
+      if (saved.toggles) {
+        toggles.forEach(t => {
+          if (saved.toggles[t.dataset.key]) { t.checked = true; t.closest('.row').classList.add('active'); }
+        });
+      }
+      window.CONFIG.overlay = !!saved.overlay;
+    }
+
+    aimVal.textContent = aimSlider.value + '%';
+    assistVal.textContent = assistSlider.value + '%';
+    lockVal.textContent = lockSlider.value + '%';
+    recoilVal.textContent = recoilSlider.value + '%';
+    precVal.textContent = precSlider.value + '%';
+    fpsVal.textContent = fpsSlider.value;
+    updateFov();
+    updateConfig();
+
+    function updateConfig() {
+      window.CONFIG.aim = +aimSlider.value;
+      window.CONFIG.aimassist = +assistSlider.value;
+      window.CONFIG.aimlock = +lockSlider.value;
+      window.CONFIG.norecoil = +recoilSlider.value;
+      window.CONFIG.fov = +fovSlider.value;
+      window.CONFIG.precision = +precSlider.value;
+      window.CONFIG.fps = +fpsSlider.value;
+      window.CONFIG.toggles = {};
+      toggles.forEach(t => { window.CONFIG.toggles[t.dataset.key] = t.checked; });
+      saveConfig();
+    }
+
+    const btnFloat = $('btnFloat');
+    function setOverlayUI(on) {
+      btnFloat.classList.toggle('on', on);
+      btnFloat.textContent = on ? '◉ OVERLAY ATIVO' : '◉ MODO OVERLAY (PERSISTENTE)';
+      window.CONFIG.overlay = on;
+      saveConfig();
+    }
+    btnFloat.addEventListener('click', () => {
+      setOverlayUI(!window.CONFIG.overlay);
+      if (navigator.wakeLock && navigator.wakeLock.request) navigator.wakeLock.request('screen').catch(() => {});
+    });
+    if (window.CONFIG.overlay) setOverlayUI(true);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && window.CONFIG.overlay) {
+        if (navigator.wakeLock && navigator.wakeLock.request) navigator.wakeLock.request('screen').catch(() => {});
+      }
+    });
+
+    const FF_PKG = 'com.dts.freefireth';
+    const PLAY_URL = 'https://play.google.com/store/apps/details?id=' + FF_PKG;
+    const btn = $('btnLaunch');
+
+    btn.addEventListener('click', () => {
+      updateConfig();
+      if (isAndroid) {
+        const intentUrl = 'intent://launch/#Intent;package=' + FF_PKG +
+          ';scheme=freefire;S.browser_fallback_url=' + encodeURIComponent(PLAY_URL) + ';end';
+        try { window.location.href = intentUrl; } catch(e) {}
+      }
+      const schemes = ['freefire://', 'freefireth://', 'com.dts.freefireth://', 'ff://'];
+      schemes.forEach((s, i) => {
+        setTimeout(() => {
+          try {
+            const ifr = document.createElement('iframe');
+            ifr.style.display = 'none'; ifr.src = s;
+            document.body.appendChild(ifr);
+            setTimeout(() => { try { ifr.parentNode && ifr.parentNode.removeChild(ifr); } catch(e) {} }, 600);
+          } catch(e) {}
+          try { window.open(s, '_blank'); } catch(e) {}
+        }, i * 80);
+      });
+    });
+
+    function updateStatus() {
+      const active = Array.prototype.filter.call(toggles, t => t.checked).length;
+      $('status').textContent = active === 0 ? 'AGUARDANDO' : active + ' ATIVO' + (active > 1 ? 'S' : '');
+      updateConfig();
+    }
+  })();
+</script>
+</body>
+</html>
